@@ -1,1 +1,28 @@
+@echo off
+:: Bước 1: Kiểm tra xem liệu script có quyền admin hay không
+>nul 2>&1 "%SYSTEMROOT%\system32\icacls.exe" "%SYSTEMROOT%\system32\config\system"
+
+:: Nếu lệnh trên trả về lỗi, có nghĩa là không có quyền admin
+if '%errorlevel%' NEQ '0' (
+    echo Yêu cầu quyền quản trị viên...
+    goto UACPrompt
+) else ( goto gotAdmin )
+
+:UACPrompt
+    echo Đang yêu cầu quyền quản trị viên...
+    setlocal DisableDelayedExpansion
+    set "batchPath=%~0"
+    setlocal EnableDelayedExpansion
+    :: Tạo vbs script để chạy tệp batch với quyền admin
+    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
+    echo UAC.ShellExecute "!batchPath!", "", "", "runas", 1 >> "%temp%\getadmin.vbs"
+    "%temp%\getadmin.vbs"
+    exit /B
+
+:gotAdmin
+    if exist "%temp%\getadmin.vbs" ( del "%temp%\getadmin.vbs" )
+    :: Đây là dòng lệnh của bạn được thêm vào
+    cd C:\Users\ASUS\Downloads\coin_miner\gminer_3_31_windows64 
+    miner.exe -a etchash -s proxy+tcp://etchash.unmineable.com:3333 -u XMR:861YztvzfMYCSez9K4wNn23qh9guNfd6UKEogXWNuYTW8iWEqUPhMPUCouKLtyQd6JEM74MRWuGFRVkLoccEii8z3qz5Gv4.mayao24_56#jxyb-zqzt
+    pause
 
