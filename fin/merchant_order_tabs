@@ -1,0 +1,250 @@
+-- DROP TABLE IF EXISTS dev_vnfdbi_opsndrivers.shopeefood_vn_food_accountant_merchant_order_details_tab;
+-- CREATE TABLE IF NOT EXISTS dev_vnfdbi_opsndrivers.shopeefood_vn_food_accountant_merchant_order_details_tab WITH (partitioned_by = ARRAY['grass_month']) AS 
+DELETE FROM dev_vnfdbi_opsndrivers.shopeefood_vn_food_accountant_merchant_order_details_tab WHERE grass_month >= date_trunc('month', date(date_parse('${yesterday}','%Y%m%d'))) - interval '1' month;
+INSERT INTO dev_vnfdbi_opsndrivers.shopeefood_vn_food_accountant_merchant_order_details_tab
+
+WITH 
+order_delivery_tab AS 
+    (
+        SELECT 
+                city_id
+            ,   create_time
+            ,   delivered_date
+            ,   extra_data
+            ,   id
+            ,   merchant_id
+            ,   merchant_name
+            ,   merchant_payment_method_id
+            ,   order_code
+            ,   order_id
+            ,   partner_contract_type
+            ,   partner_id
+            ,   partner_run_type
+            ,   partner_service
+            ,   partner_type
+            ,   payment_method_id
+            ,   status_id
+            ,   cast(json_extract(extra_data, '$.commission.pay_type') as int) as merchant_pay_type
+            ,   cast(json_extract(extra_data, '$.order.shipping_method_id') as int) as shipping_method_id
+            ,   cast(json_extract(extra_data, '$.order.coin_discount') as int) as  coin_redeemed 
+            ,   DATE(FROM_UNIXTIME(delivered_date-3600)) AS date_
+        FROM shopeefood.foody_accountant_archive_db__order_delivery_tab__reg_daily_s0_live
+        WHERE 1=1
+            -- AND DATE(FROM_UNIXTIME(delivered_date-3600)) BETWEEN DATE('2022-01-01') AND CURRENT_DATE - INTERVAL '1' DAY
+            AND DATE(FROM_UNIXTIME(delivered_date-3600)) BETWEEN date_trunc('month', date(date_parse('${yesterday}','%Y%m%d'))) - interval '1' month AND date(date_parse('${yesterday}','%Y%m%d'))
+        UNION ALL
+        SELECT 
+                city_id
+            ,   create_time
+            ,   delivered_date
+            ,   extra_data
+            ,   id
+            ,   merchant_id
+            ,   merchant_name
+            ,   merchant_payment_method_id
+            ,   order_code
+            ,   order_id
+            ,   partner_contract_type
+            ,   partner_id
+            ,   partner_run_type
+            ,   partner_service
+            ,   partner_type
+            ,   payment_method_id
+            ,   status_id
+            ,   cast(json_extract(extra_data, '$.commission.pay_type') as int) as merchant_pay_type
+            ,   cast(json_extract(extra_data, '$.order.shipping_method_id') as int) as shipping_method_id
+            ,   cast(json_extract(extra_data, '$.order.coin_discount') as int) as  coin_redeemed 
+            ,   DATE(FROM_UNIXTIME(delivered_date-3600)) AS date_
+        FROM shopeefood.foody_accountant_db__order_delivery_tab__reg_daily_s0_live
+        WHERE 1=1
+            -- AND DATE(FROM_UNIXTIME(delivered_date-3600)) BETWEEN DATE('2022-01-01') AND CURRENT_DATE - INTERVAL '1' DAY
+            AND DATE(FROM_UNIXTIME(delivered_date-3600)) BETWEEN date_trunc('month', date(date_parse('${yesterday}','%Y%m%d'))) - interval '1' month AND date(date_parse('${yesterday}','%Y%m%d'))
+    )
+, raw_non_verify_merchant_service_fee AS 
+    (
+        SELECT
+                order_id
+            ,   CAST(json_extract(odt.extra_data,'$.order.service_fees[0].code') AS VARCHAR) AS code_0
+            ,   json_extract(odt.extra_data,'$.order.service_fees[0].collect_amount') AS value_0
+            ,   CAST(json_extract(odt.extra_data,'$.order.service_fees[1].code') AS VARCHAR) AS code_1
+            ,   json_extract(odt.extra_data,'$.order.service_fees[1].collect_amount') AS value_1
+            ,   CAST(json_extract(odt.extra_data,'$.order.service_fees[2].code') AS VARCHAR) AS code_2
+            ,   json_extract(odt.extra_data,'$.order.service_fees[2].collect_amount') AS value_2
+            ,   CAST(json_extract(odt.extra_data,'$.order.service_fees[3].code') AS VARCHAR) AS code_3
+            ,   json_extract(odt.extra_data,'$.order.service_fees[3].collect_amount') AS value_3
+            ,   CAST(json_extract(odt.extra_data,'$.order.service_fees[4].code') AS VARCHAR) AS code_4
+            ,   json_extract(odt.extra_data,'$.order.service_fees[4].collect_amount') AS value_4
+            ,   CAST(json_extract(odt.extra_data,'$.order.service_fees[5].code') AS VARCHAR) AS code_5
+            ,   json_extract(odt.extra_data,'$.order.service_fees[5].collect_amount') AS value_5
+            ,   CAST(json_extract(odt.extra_data,'$.order.service_fees[6].code') AS VARCHAR) AS code_6
+            ,   json_extract(odt.extra_data,'$.order.service_fees[6].collect_amount') AS value_6
+            ,   CAST(json_extract(odt.extra_data,'$.order.service_fees[7].code') AS VARCHAR) AS code_7
+            ,   json_extract(odt.extra_data,'$.order.service_fees[7].collect_amount') AS value_7
+            ,   CAST(json_extract(odt.extra_data,'$.order.service_fees[8].code') AS VARCHAR) AS code_8
+            ,   json_extract(odt.extra_data,'$.order.service_fees[8].collect_amount') AS value_8
+            ,   CAST(json_extract(odt.extra_data,'$.order.service_fees[9].code') AS VARCHAR) AS code_9
+            ,   json_extract(odt.extra_data,'$.order.service_fees[9].collect_amount') AS value_9
+            ,   CAST(json_extract(odt.extra_data,'$.order.service_fees[10].code') AS VARCHAR) AS code_10
+            ,   json_extract(odt.extra_data,'$.order.service_fees[10].collect_amount') AS value_10
+        FROM order_delivery_tab odt
+        WHERE 1=1
+            AND extra_data LIKE '%non_verify_merchant_service_fee%'
+    )
+, nvmsf AS 
+    (
+        SELECT 
+            order_id,
+            CASE 
+                WHEN CAST(code_0 AS VARCHAR) = 'non_verify_merchant_service_fee' THEN CAST(value_0 AS INT)
+                WHEN CAST(code_1 AS VARCHAR) = 'non_verify_merchant_service_fee'  THEN CAST(value_1 AS INT)
+                WHEN CAST(code_2 AS VARCHAR) = 'non_verify_merchant_service_fee'  THEN CAST(value_2 AS INT)
+                WHEN CAST(code_3 AS VARCHAR) = 'non_verify_merchant_service_fee'  THEN CAST(value_3 AS INT)
+                WHEN CAST(code_4 AS VARCHAR) = 'non_verify_merchant_service_fee'  THEN CAST(value_4 AS INT)
+                WHEN CAST(code_5 AS VARCHAR) = 'non_verify_merchant_service_fee'  THEN CAST(value_5 AS INT)
+                WHEN CAST(code_6 AS VARCHAR) = 'non_verify_merchant_service_fee'  THEN CAST(value_6 AS INT)
+                WHEN CAST(code_7 AS VARCHAR) = 'non_verify_merchant_service_fee'  THEN CAST(value_7 AS INT)
+                WHEN CAST(code_8 AS VARCHAR) = 'non_verify_merchant_service_fee'  THEN CAST(value_8 AS INT)
+                WHEN CAST(code_9 AS VARCHAR) = 'non_verify_merchant_service_fee'  THEN CAST(value_9 AS INT)
+                WHEN CAST(code_10 AS VARCHAR) = 'non_verify_merchant_service_fee'  THEN CAST(value_10 AS INT)
+                ELSE 0
+            END AS non_verify_merchant_service_fee
+        FROM raw_non_verify_merchant_service_fee
+    ) 
+, merchant_profile AS 
+    (
+        SELECT * 
+        FROM shopeefood.foody_mart__profile_merchant_master 
+        WHERE   1=1
+            AND DATE(grass_date) = CURRENT_DATE - INTERVAL '1' DAY
+            AND grass_date != 'current' 
+            AND city_name NOT LIKE '%TEST%'
+    )
+, fact_order_join_detail AS
+    (
+        SELECT id,shop_commission_amount, create_timestamp
+        FROM shopeefood.foody_mart__fact_order_join_detail
+        WHERE   1=1
+            -- AND DATE(FROM_UNIXTIME(create_timestamp)) BETWEEN DATE('2022-01-01') AND CURRENT_DATE - INTERVAL '1' DAY
+            AND DATE(FROM_UNIXTIME(create_timestamp)) BETWEEN date_trunc('month', date(date_parse('${yesterday}','%Y%m%d'))) - interval '1' month AND date(date_parse('${yesterday}','%Y%m%d'))
+    )
+, fact_gross_order_join_detail AS
+    (
+        SELECT id,app_type_id,payment_method_id
+        FROM shopeefood.foody_mart__fact_gross_order_join_detail
+        WHERE   1=1
+            -- AND DATE(FROM_UNIXTIME(create_timestamp)) BETWEEN DATE('2022-01-01') AND CURRENT_DATE - INTERVAL '1' DAY
+            AND DATE(FROM_UNIXTIME(create_timestamp)) BETWEEN date_trunc('month', date(date_parse('${yesterday}','%Y%m%d'))) - interval '1' month AND date(date_parse('${yesterday}','%Y%m%d'))
+    )
+, dim_city AS 
+    (
+        SELECT DISTINCT city_id,city_name
+        FROM shopeefood.foody_mart__fact_gross_order_join_detail
+        WHERE   1=1
+            -- AND DATE(FROM_UNIXTIME(create_timestamp)) BETWEEN DATE('2022-01-01') AND CURRENT_DATE - INTERVAL '1' DAY
+            AND DATE(FROM_UNIXTIME(create_timestamp)) BETWEEN date_trunc('month', date(date_parse('${yesterday}','%Y%m%d'))) - interval '1' month AND date(date_parse('${yesterday}','%Y%m%d'))
+    )
+, raw_data AS 
+    (
+        SELECT  
+                CAST(odt.merchant_id AS INT) AS Merchant_ID
+            ,   CAST(odt.merchant_name AS VARCHAR) AS Merchant_Name
+            ,   CAST(odt.city_id AS INT) AS city_id
+            ,   case when odt.city_id = 238 then 'Dien Bien' else COALESCE(dc.city_name,'OTHERS') END AS city_name
+            ,   case -- service
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 1 then 'FOOD'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 4 then 'PRODUCTS'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 5 then 'FRESH'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 6 then 'FLOWERS'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 7 then 'MEDICINE'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 12 then 'NOW_SHIP_MULTI_DROP'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 13 then 'LIQUOR'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 17 then 'NOW_SHIP_USER'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 18 then 'NOW_SHIP_MERCHANT'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 22 then 'NOW_SHIP_SHOPEE'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 23 then 'NOW_SHIP_SAME_DAY'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 25 then 'NOW_SHIP_SPX'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 24 then 'PETS'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 3 then 'LAUNDRY'
+                    when CAST(json_extract(odt.extra_data,'$.order.foody_service_id') AS INT) = 100 then 'ACCOUNTANT'
+                    ELSE 'OTHERS'
+                end as service
+            ,   CAST(mp.brand_name AS VARCHAR) as brand_name
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.merchant_level') AS VARCHAR),'unknown') AS verified
+            ,   DATE(date_) AS date_
+            ,   FROM_UNIXTIME(odt.create_time - 3600) AS create_time
+            ,   CASE -- order_source
+                    WHEN app_type_id IN (50,51) THEN 'SHOPEE'
+                    WHEN app_type_id IN (10,11,12,13,16,17,22,32) THEN 'SHOPEEFOOD_WEB'
+                    ELSE 'SHOPEEFOOD_APP'
+                END AS order_source
+            ,   odt.order_id AS order_id
+            ,   odt.order_code AS order_code
+            ,   CASE WHEN o.id IS NOT NULL THEN 'DELIVERED' ELSE 'QUIT' END AS order_status
+            ,   CAST(json_extract(odt.extra_data,'$.order.original_price') AS INT) AS GMV
+            ,   CAST(json_extract(odt.extra_data,'$.order.commission') AS INT) AS foody_commission
+            ,   CASE -- foody_commission_receivable
+                    WHEN        merchant_pay_type = 1 
+                            AND odt.shipping_method_id != 3 
+                            AND odt.partner_id = 0 
+                            AND odt.merchant_payment_method_id = 1 
+                            AND odt.payment_method_id = 1
+                        THEN CAST(json_extract(odt.extra_data,'$.order.commission') AS INT) 
+                    ELSE 0 
+                END AS foody_commission_receivable
+            ,   CAST(coalesce(nvmsf.non_verify_merchant_service_fee,0) AS DOUBLE) AS non_verify_merchant_service_fee
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.commission.commission_for_foody') AS VARCHAR),'unknown') AS foody_commission_rate
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.small_order_fee') AS INT),0) AS small_order_fee
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.late_night_fee') AS INT),0) AS late_night_fee
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.holiday_fee') AS INT),0) AS holiday_fee
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.platform_fee') AS INT),0) AS platform_fee
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.shipping_fee') AS INT),0) AS shipping_fee
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.weather_fee_collected') AS INT),0) AS bad_weather_fee
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.vat_ship_fee') AS INT),0)  AS vat_ship_fee
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.total_discount') AS INT),0) AS total_discount
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.foody_discount')  AS INT),0) AS foody_discount
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.merchant_discount')  AS INT),0) AS merchant_discount
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.packing_fee') AS INT),0) AS packing_fee
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.merchant_paid_amount') AS INT),0) AS Paid_To_Merchant
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.risk_fee') AS INT),0) AS risk_other
+            ,   coalesce(CAST(json_extract(odt.extra_data,'$.order.custome_fee') AS INT),0) AS custome_fee
+            ,   CASE -- merchant_payment_method
+                    WHEN odt.merchant_payment_method_id = 6 THEN 'NWL'
+                    WHEN odt.merchant_payment_method_id = 1 THEN 'CASH'
+                    ELSE 'OTHERS'
+                END AS merchant_payment_method
+            ,   CASE WHEN odt.merchant_payment_method_id = 6 THEN CAST(json_extract(odt.extra_data,'$.order.merchant_paid_amount') AS INT) ELSE 0 END AS Paid_To_Merchant_By_NWL
+            ,   CASE WHEN odt.merchant_payment_method_id = 1 THEN CAST(json_extract(odt.extra_data,'$.order.merchant_paid_amount') AS INT) ELSE 0 END AS Paid_To_Merchant_By_Cash
+            ,   CASE -- payment_method
+                    WHEN go.payment_method_id = 1 THEN 'CASH'
+                    WHEN go.payment_method_id = 2 THEN 'PAYNOW_CREDIT'
+                    WHEN go.payment_method_id = 3 THEN 'BANK_TRANSFER'
+                    WHEN go.payment_method_id = 4 THEN 'CARD'
+                    WHEN go.payment_method_id = 6 THEN 'SHOPEEPAY'
+                    WHEN go.payment_method_id = 7 THEN 'MOMO'
+                    WHEN go.payment_method_id = 8 THEN 'VNPAY/IBANKING'
+                    WHEN go.payment_method_id = 12 THEN 'SHOPEEPAY_CREDIT_CARD'
+                    WHEN go.payment_method_id = 13 THEN 'VIETTELPAY'
+                    ELSE 'OTHERS'
+                END AS payment_method
+            ,   case -- refund_check
+                    when cast(json_extract(odt.extra_data, '$.order.is_quit_refund') as varchar) = 'true' then 1 
+                    else 0
+                end as refund_check
+            ,   odt.coin_redeemed AS coin_redeemed
+            ,   tc.enterprise_id
+            ,   DATE_TRUNC('month', DATE(date_)) grass_month 
+        FROM order_delivery_tab odt
+        LEFT JOIN merchant_profile mp ON mp.merchant_id = odt.merchant_id
+        LEFT JOIN nvmsf ON nvmsf.order_id = odt.order_id
+        LEFT JOIN fact_order_join_detail o ON o.id = odt.order_id
+        LEFT JOIN fact_gross_order_join_detail go ON go.id = odt.order_id 
+        LEFT JOIN dim_city dc ON dc.city_id = odt.city_id
+        LEFT JOIN 
+            (
+                select distinct restaurant_id, brand_id as enterprise_id
+                from shopeefood.foody_merchant_db__brand_business_restaurant_tab__reg_daily_s0_live
+            ) tc on tc.restaurant_id = CAST(odt.merchant_id AS INT)
+        WHERE 1=1 
+        ORDER BY date_ DESC
+    )
+select * from raw_data
