@@ -1,0 +1,16 @@
+{
+	"spark.executor.cores": "4",
+	"spark.executor.memory": "7G",
+	"spark.shuffle.partitions": "500",
+	"spark.dynamicAllocation.initialExecutors": "100",
+	"spark.dynamicAllocation.maxExecutors": "200",
+	"spark.dynamicAllocation.minExecutors": "100",
+	"spark.sql.broadcastTimeout": "1200",
+	"spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version": "1",
+	"spark.compact.size": "524288000",
+	"spark.compact.smallfile.size": "209715200",
+	"spark.sql.parquet.enableVectorizedReader": "true",
+	"spark.sql.parquet.writeLegacyFormat": "true",
+	"spark.shuffle.service.enabled": "true",
+	"spark.dynamicAllocation.enabled": "true"
+}
