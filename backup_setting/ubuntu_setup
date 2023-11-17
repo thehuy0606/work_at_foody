@@ -1,1 +1,17 @@
-
+sudo apt-get update -y
+sudo apt install net-tools wget -y 
+sudo apt-get install openssh-server -y
+sudo apt install screen -y 
+sudo apt install bzip2 -y 
+sudo apt install nano -y 
+sudo apt install ufw -y 
+sudo apt install wget -y 
+sudo apt install vim -y 
+sudo apt install cronie -y 
+sudo apt install epel-release -y 
+sudo apt install xrdp tigervnc-server -y 
+service crond start 
+chkconfig crond on 
+systemctl start xrdp.service
+systemctl enable xrdp.service
+nmcli networking on 
