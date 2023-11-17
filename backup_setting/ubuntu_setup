@@ -16,9 +16,12 @@ systemctl start xrdp.service
 systemctl enable xrdp.service
 nmcli networking on 
 
-sudo apt-get install mate-desktop-environment
-sudo ufw disable
+sudo apt-get install mate-desktop-environment -y
+
+sudo ufw disable 
+
 sudo systemctl disable ufw
+
 sudo update-locale LANG=en_US.UTF-8
 
 
