@@ -1,3 +1,4 @@
+-- get by city
 WITH 
 base AS 
     (
@@ -152,25 +153,24 @@ fgps AS
             r.order_city 
         ,   r.behavior 
         ,   r.hit_order 
-        ,   b.net_order
+        ,   b.net_order 
+        ,   (1.0000*r.hit_order)/b.net_order percent_hitrule
     FROM 
         (
             SELECT  r.order_city 
                 ,   r.behavior 
                 ,   SUM(r.hit_order) hit_order
-            FROM        hit_rules r 
+            FROM    hit_rules r 
             GROUP BY 1, 2 
         )   r 
     LEFT JOIN 
         (
             SELECT  r.order_city 
                 ,   SUM(r.net_order) net_order 
-            FROM        raw_order r 
+            FROM    raw_order r 
             GROUP BY 1
         )   b   ON r.order_city = b.order_city 
     
 )
 select  *
 from agg0
-
-
