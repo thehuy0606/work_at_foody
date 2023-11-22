@@ -6,15 +6,16 @@ base_lv1 AS
         ,   c.merchant_name
         ,   b.id item_id
         ,   b.name item_name 
-        ,   REGEXP_EXTRACT(b.name, '\b\d{10}\b') extracted_number
+        ,   REGEXP_EXTRACT(b.name, '\b\d{10}\b') ex_number_from_item
         ,   b.description description_item
+        ,   REGEXP_EXTRACT(b.description, '\b\d{10}\b') ex_number_from_description
     FROM shopeefood.foody_merchant_db__dish_tab__reg_daily_s0_live b 
     JOIN shopeefood.foody_mart__profile_merchant_master c on b.restaurant_id = c.merchant_id 
     WHERE   1=1 
         AND c.grass_date = 'current' 
         AND c.is_active_flag = 1 
         AND b.is_deleted = 0
-        AND REGEXP_EXTRACT(b.name, '\b\d{10}\b') IS NOT NULL  
+        AND (REGEXP_EXTRACT(b.name, '\b\d{10}\b') IS NOT NULL OR REGEXP_EXTRACT(b.description, '\b\d{10}\b') IS NOT NULL)
     ORDER BY 1, 2, 3, 4
 )
 SELECT  b.merchant_id 
@@ -27,7 +28,9 @@ SELECT  b.merchant_id
     ,   c.city_name 
     ,   b.item_name 
     ,   b.item_id 
-    ,   b.extracted_number 
+    ,   b.description_item 
+    ,   b.ex_number_from_item 
+    ,   b.ex_number_from_description
     ,   bde_email 
     ,   c.segment 
     ,   b.description_item 
