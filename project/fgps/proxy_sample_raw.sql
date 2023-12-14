@@ -52,7 +52,7 @@ result as
             ON      a.driver_id = b.driver_now_id 
                 AND b.ping_time BETWEEN a.delivery_assign_time - INTERVAL '5' MINUTE AND a.delivery_delivered_time + INTERVAL '5' MINUTE 
     )
-select  * 
+select  distinct * 
 from result 
 order by 1 desc, 2, 14,17
 ;
@@ -116,6 +116,6 @@ result as
             ON      a.driver_id = b.driver_now_id 
                 AND b.ping_time BETWEEN a.delivery_assign_time - INTERVAL '5' MINUTE AND a.delivery_delivered_time + INTERVAL '5' MINUTE 
     )   
-select  * 
+select  distinct * 
 from result 
 order by 1 desc, 2, 14,17
