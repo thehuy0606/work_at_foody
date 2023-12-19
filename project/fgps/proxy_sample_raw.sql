@@ -6,6 +6,7 @@ hit_proxy as
         select  *
         from dev_vnfdbi_opsndrivers.bnp_bi_fraud__fgps__order_tags 
         where   behavior like 'Proxy_%'
+            and order_date between date('2023-11-01') and date('2023-11-30')
     )
 ,raw_hit_proxy as 
     (
