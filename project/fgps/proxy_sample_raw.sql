@@ -6,12 +6,8 @@ hit_proxy as
         select  *
         from dev_vnfdbi_opsndrivers.bnp_bi_fraud__fgps__order_tags 
         where   behavior like 'Proxy_%'
-    ),
-dri_proxy as 
-    (
-        select driver_now_id dr, count(*) hit_cnt from hit_proxy group by 1 order by 2 desc limit 200 
-    ),
-raw_hit_proxy as 
+    )
+,raw_hit_proxy as 
     (
         select  b.order_date 
             ,   b.order_id 
@@ -25,21 +21,19 @@ raw_hit_proxy as
             ,   b.accept_latitude 
             ,   b.accept_longitude 
             ,   b.behavior 
-            ,   IF(b.store_latitude = b.accept_latitude AND b.store_longitude = b.accept_longitude, 1, 0) is_store_equal_accept
             ,   b.delivery_assign_time 
             ,   b.delivery_pickup_time 
             ,   b.delivery_delivered_time
-        from    hit_proxy b
-        join    dri_proxy on b.driver_now_id = dri_proxy.dr 
-        limit 200
-    ),
-result as 
+        from    hit_proxy b 
+    )
+,result as 
     (
-        select  a.*
+        select  distinct 
+                a.*
             ,   case 
                     when b.ping_time BETWEEN a.delivery_assign_time - INTERVAL '5' MINUTE   AND a.delivery_pickup_time                          then 'early'
                     when b.ping_time BETWEEN a.delivery_pickup_time                         AND a.delivery_delivered_time                       then 'middle'
-                    when b.ping_time BETWEEN a.delivery_delivered_time                      AND a.delivery_delivered_time - INTERVAL '5' MINUTE then 'end'
+                    when b.ping_time BETWEEN a.delivery_delivered_time                      AND a.delivery_delivered_time + INTERVAL '5' MINUTE then 'end'
                 end period 
             ,   b.ping_time 
             ,   b.latitude 
@@ -52,9 +46,36 @@ result as
             ON      a.driver_id = b.driver_now_id 
                 AND b.ping_time BETWEEN a.delivery_assign_time - INTERVAL '5' MINUTE AND a.delivery_delivered_time + INTERVAL '5' MINUTE 
     )
-select  distinct * 
-from result 
-order by 1 desc, 2, 14,17
+,agg0 as 
+(
+    select  order_id 
+        ,   behavior
+        ,   count(distinct period) cnt_period
+    from    result 
+    group by 1,2 
+    having  count(distinct period) = 3
+)   
+,lit as 
+(
+    (select * from agg0 where behavior = 'Proxy_Repetitive long decimal digit of accuracy and speed' limit 200)
+    union 
+    (select * from agg0 where behavior = 'Proxy_Repacked App usage' limit 200)
+    union 
+    (select * from agg0 where behavior = 'Proxy_Repetitive same accuracy' limit 200)
+)
+,report as 
+(
+    select  a.* 
+    from result a
+    join lit b on a.order_id = b.order_id and a.behavior = b.behavior  
+    order by 1 desc, 2, 14,17
+)
+select * from report
+-- select order_id 
+--     ,   count(distinct period) cnt 
+-- from report
+-- group by 1 
+-- having count(distinct period) < 3
 ;
 DROP TABLE IF EXISTS    dev_vnfdbi_opsndrivers.fgps_non_proxy_sample;
 CREATE TABLE            dev_vnfdbi_opsndrivers.fgps_non_proxy_sample as
